@@ -1,0 +1,80 @@
+{{ define "register.html" }}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>创建账号</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, "Microsoft YaHei", system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; display: grid; place-items: center; background: radial-gradient(circle at 20% 20%, #243b73 0, #11182e 38%, #090b12 100%); color: #f7f8fc; }
+    .card { width: min(440px, calc(100% - 32px)); padding: 38px; border: 1px solid #ffffff18; border-radius: 20px; background: #151927dd; box-shadow: 0 24px 70px #0007; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #bfcaff; }
+    .brand i { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 10px; background: #7084ff; color: #10162b; font-style: normal; }
+    h1 { margin: 24px 0 8px; font-size: 28px; }
+    .subtitle { margin: 0 0 26px; color: #aeb5cc; font-size: 14px; line-height: 1.6; }
+    label { display: block; margin: 16px 0 7px; color: #d5daf0; font-size: 14px; }
+    input { width: 100%; padding: 12px 13px; border: 1px solid #343b55; border-radius: 10px; outline: none; background: #0d101a; color: #fff; font: inherit; }
+    input:focus { border-color: #8193ff; box-shadow: 0 0 0 3px #7184ff33; }
+    button { width: 100%; margin-top: 25px; padding: 12px; border: 0; border-radius: 10px; cursor: pointer; background: #788bff; color: #11152b; font-weight: 700; font: inherit; }
+    button:hover { background: #94a2ff; }
+    button:disabled { cursor: wait; opacity: .65; }
+    #message { min-height: 22px; margin: 15px 0 0; font-size: 14px; }
+    .success { color: #75dfaa; } .error { color: #ff9fa8; }
+    .tip { margin-top: 22px; color: #8e96b1; font-size: 12px; text-align: center; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="brand"><i>Q</i><span>Quick IM</span></div>
+    <h1>创建你的账号</h1>
+    <p class="subtitle">注册后将用于后续的 JWT 登录、WebSocket 长连接和单聊演示。</p>
+    <form id="register-form">
+      <label for="username">用户名</label>
+      <input id="username" name="username" required minlength="3" maxlength="32" autocomplete="username" placeholder="至少 3 个字符">
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" required minlength="6" maxlength="64" autocomplete="new-password" placeholder="至少 6 个字符">
+      <button id="submit" type="submit">注册账号</button>
+    </form>
+    <p id="message" role="status"></p>
+    
+  </main>
+  <script>
+    const form = document.querySelector('#register-form');
+    const button = document.querySelector('#submit');
+    const message = document.querySelector('#message');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      message.className = '';
+      message.textContent = '';
+      button.disabled = true;
+      button.textContent = '正在注册…';
+
+      try {
+        const response = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: form.username.value.trim(),
+            password: form.password.value
+          })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || data.message || '注册失败，请稍后重试');
+        message.className = 'success';
+        message.textContent = '注册成功。下一步可接入登录接口并获取 JWT。';
+        form.reset();
+      } catch (error) {
+        message.className = 'error';
+        message.textContent = error.message;
+      } finally {
+        button.disabled = false;
+        button.textContent = '注册账号';
+      }
+    });
+  </script>
+</body>
+</html>
+{{ end }}

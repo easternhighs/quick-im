@@ -3,6 +3,7 @@ package user
 import (
 	"log"
 	"quick-im-demo/internal/config"
+	"strconv"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -11,24 +12,23 @@ import (
 type Config struct {
 }
 
-func initDB() {
+func initDB() (db *gorm.DB) {
 	config := config.ReadConfig("config.yaml")
-	dsn := config.MySQL.Username + ":" + config.MySQL.Password + "@tcp(" + config.MySQL.Host + ":" + string(config.MySQL.Port) + ")/" + config.MySQL.Database + "?charset=" + config.MySQL.Charset + "&parseTime=True&loc=Local"
+	dsn := config.MySQL.Username + ":" + config.MySQL.Password + "@tcp(" + config.MySQL.Host + ":" + strconv.Itoa(config.MySQL.Port) + ")/" + config.MySQL.Database + "?charset=" + config.MySQL.Charset + "&parseTime=True&loc=Local"
 
 	//根据配置信息，连接数据库
-	DB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatal("connect mysql failed:", err)
 		panic("failed to connect database")
 	}
 
-	if err := DB.AutoMigrate(&User{}); err != nil {
+	if err := db.AutoMigrate(&User{}); err != nil {
 		log.Fatal("auto migrate failed:", err)
 		panic("failed to auto migrate database")
 	}
 
+	return
 }
 
-func init() {
-	initDB()
-}
+var DB = initDB()
