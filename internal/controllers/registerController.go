@@ -1,51 +1,59 @@
 package controllers
 
 import (
-	"fmt"
+	"errors"
 	"quick-im-demo/internal/models/user"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
-type RegisterController struct {
-	// DefaultController
-}
+type RegisterController struct{}
 
 type UserRegisterInfo struct {
-	Username string `form:"username" json:"username" binding:"required"`
-	Password string `form:"password" json:"password" binding:"required"`
+	Username string `json:"username" binding:"required,min=3,max=32"`
+	Password string `json:"password" binding:"required,min=6,max=64"`
 }
 
-func (rc RegisterController) DoRegister(c *gin.Context) {
+func (RegisterController) DoRegister(c *gin.Context) {
 	c.HTML(200, "register.html", gin.H{})
 }
 
-func (rc RegisterController) WriteRegisterInfo(c *gin.Context) {
+func (RegisterController) WriteRegisterInfo(c *gin.Context) {
 	var registerInfo UserRegisterInfo
 	if err := c.ShouldBindJSON(&registerInfo); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-	// 处理注册逻辑，例如验证输入、保存用户信息等
-	username := registerInfo.Username
-	//对密码进行哈希加密后存储到数据库中
+
+	var existingUser user.User
+	err := user.DB.Where("username = ?", registerInfo.Username).First(&existingUser).Error
+	if err == nil {
+		c.JSON(409, gin.H{"error": "username already exists"})
+		return
+	}
+	if !errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(500, gin.H{"error": "query user failed"})
+		return
+	}
+
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(registerInfo.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(500, gin.H{"error": "Failed to hash password"})
+		c.JSON(500, gin.H{"error": "password hash failed"})
 		return
 	}
 
 	userInfo := user.User{
-		Username:  username,
+		Username:  registerInfo.Username,
 		Password:  string(hashPassword),
 		CreatedAt: time.Now(),
 	}
+	if err := user.DB.Create(&userInfo).Error; err != nil {
+		c.JSON(500, gin.H{"error": "create user failed"})
+		return
+	}
 
-	user.DB.Create(&userInfo)
-
-	var test user.User
-	user.DB.Find(&test)
-	fmt.Println(test)
+	c.JSON(201, gin.H{"id": userInfo.Id, "username": userInfo.Username, "message": "register successful"})
 }

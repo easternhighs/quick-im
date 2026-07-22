@@ -13,7 +13,7 @@ type Config struct {
 }
 
 func initDB() (db *gorm.DB) {
-	config := config.ReadConfig("config.yaml")
+	config := config.ReadConfig(config.ConfigFileName)
 	dsn := config.MySQL.Username + ":" + config.MySQL.Password + "@tcp(" + config.MySQL.Host + ":" + strconv.Itoa(config.MySQL.Port) + ")/" + config.MySQL.Database + "?charset=" + config.MySQL.Charset + "&parseTime=True&loc=Local"
 
 	//根据配置信息，连接数据库

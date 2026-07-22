@@ -7,6 +7,8 @@ import (
 	"go.yaml.in/yaml/v2"
 )
 
+var ConfigFileName = "config.yaml"
+
 // 总配置内容
 type Config struct {
 	App   AppConfig   `yaml:"app"`
@@ -42,9 +44,14 @@ type JWTConfig struct {
 	ExpireHours int    `yaml:"expire_hours"`
 }
 
-func ReadConfig(configFileName string) Config {
+func ReadConfig(configFileName ...string) Config {
+	targetFileName := ConfigFileName
+	if len(configFileName) > 0 {
+		targetFileName = configFileName[0]
+	}
+
 	//打开配置文件
-	configFile, ReadConfigErr := os.OpenFile(configFileName, os.O_RDONLY, 0666)
+	configFile, ReadConfigErr := os.OpenFile(targetFileName, os.O_RDONLY, 0666)
 	if ReadConfigErr != nil {
 		log.Fatal("failed to open config file:", ReadConfigErr)
 	}
@@ -52,7 +59,7 @@ func ReadConfig(configFileName string) Config {
 
 	//读取配置文件内容
 	config := Config{}
-	configFile_byte, ReadConfigErr := os.ReadFile(configFileName)
+	configFile_byte, ReadConfigErr := os.ReadFile(targetFileName)
 	if ReadConfigErr != nil {
 		log.Fatal("failed to read config file:", ReadConfigErr)
 	}

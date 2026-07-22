@@ -1,0 +1,137 @@
+{{ define "im.html" }}
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quick IM · 控制台</title>
+    <style>
+        :root {
+            font-family: Inter, "Microsoft YaHei", system-ui;
+            color-scheme: dark
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #0b0e16;
+            color: #edf0fa
+        }
+
+        .layout {
+            max-width: 1040px;
+            margin: auto;
+            padding: 32px 20px
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px
+        }
+
+        .badge {
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #262c42;
+            color: #bfcaff;
+            font-size: 13px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 18px;
+            margin-top: 28px
+        }
+
+        .card {
+            padding: 22px;
+            border: 1px solid #292f45;
+            border-radius: 16px;
+            background: #131722
+        }
+
+        .label {
+            margin: 0;
+            color: #9ea7c0;
+            font-size: 13px
+        }
+
+        .value {
+            margin: 8px 0 0;
+            font-size: 20px
+        }
+
+        .state {
+            color: #ff9fa8
+        }
+
+        .state.online {
+            color: #75dfaa
+        }
+
+        .log {
+            height: 285px;
+            overflow: auto;
+            margin: 14px 0 0;
+            padding: 12px;
+            border-radius: 10px;
+            background: #090b12;
+            color: #cbd2e8;
+            font: 13px/1.7 ui-monospace, Consolas, monospace;
+            white-space: pre-wrap
+        }
+
+        button {
+            margin-top: 16px;
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 9px;
+            background: #7c8dff;
+            color: #10152b;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        @media(max-width:720px) {
+            .grid {
+                grid-template-columns: 1fr
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="layout">
+        <header class="top">
+            <div><span class="badge">Quick IM · Day 3</span>
+                <h1>你好，{{ .username }}</h1>
+                <p class="label">JWT 已通过服务端验证；正在建立 WebSocket。</p>
+            </div><button id="logout">退出登录</button>
+        </header>
+        <section class="grid">
+            <article class="card">
+                <p class="label">WebSocket 状态</p>
+                <p class="value state" id="status">连接中…</p>
+                <p class="label">下一步：单聊投递、群聊、未读数、离线消息。</p><button id="ping">发送心跳</button>
+            </article>
+            <article class="card">
+                <p class="label">连接事件</p>
+                <pre class="log" id="log"></pre>
+            </article>
+        </section>
+    </main>
+    <script>
+        const status = document.querySelector('#status'), log = document.querySelector('#log'), ping = document.querySelector('#ping'); let socket; function write(event) { log.textContent += `[${new Date().toLocaleTimeString()}] ${event}\n`; log.scrollTop = log.scrollHeight } function connect() { const protocol = location.protocol === 'https:' ? 'wss' : 'ws'; socket = new WebSocket(`${protocol}://${location.host}/ws`); socket.onopen = () => { status.textContent = '已连接'; status.classList.add('online'); write('WebSocket opened') }; socket.onmessage = event => write(`received: ${event.data}`); socket.onerror = () => write('WebSocket error'); socket.onclose = () => { status.textContent = '已断开'; status.classList.remove('online'); write('WebSocket closed') } } ping.addEventListener('click', () => { if (socket?.readyState === WebSocket.OPEN) { socket.send('ping'); write('sent: ping') } else write('connection is not ready') }); document.querySelector('#logout').addEventListener('click', async () => { await fetch('/auth/logout', { method: 'POST' }); localStorage.removeItem('quick_im_token'); location.assign('/auth/login') }); connect();
+    </script>
+</body>
+
+</html>
+{{ end }}

@@ -1,0 +1,140 @@
+{{ define "login.html" }}
+<!doctype html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quick IM · 登录</title>
+  <style>
+    :root {
+      font-family: Inter, "Microsoft YaHei", system-ui;
+      color-scheme: dark
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 80% 10%, #304c95, #090b12 65%);
+      color: #f7f8fc
+    }
+
+    .card {
+      width: min(440px, calc(100% - 32px));
+      padding: 38px;
+      border: 1px solid #ffffff18;
+      border-radius: 20px;
+      background: #151927dd;
+      box-shadow: 0 24px 70px #0007
+    }
+
+    .brand {
+      font-weight: 700;
+      color: #bfcaff
+    }
+
+    h1 {
+      margin: 24px 0 8px;
+      font-size: 28px
+    }
+
+    .sub {
+      margin: 0 0 26px;
+      color: #aeb5cc;
+      font-size: 14px;
+      line-height: 1.6
+    }
+
+    label {
+      display: block;
+      margin: 16px 0 7px;
+      color: #d5daf0;
+      font-size: 14px
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #343b55;
+      border-radius: 10px;
+      outline: 0;
+      background: #0d101a;
+      color: #fff;
+      font: inherit
+    }
+
+    input:focus {
+      border-color: #8193ff
+    }
+
+    button {
+      width: 100%;
+      margin-top: 25px;
+      padding: 12px;
+      border: 0;
+      border-radius: 10px;
+      background: #788bff;
+      color: #11152b;
+      cursor: pointer;
+      font-weight: 700;
+      font: inherit
+    }
+
+    button:disabled {
+      opacity: .65;
+      cursor: wait
+    }
+
+    #message {
+      min-height: 22px;
+      margin: 15px 0 0;
+      font-size: 14px
+    }
+
+    .success {
+      color: #75dfaa
+    }
+
+    .error {
+      color: #ff9fa8
+    }
+
+    .footer {
+      margin-top: 22px;
+      color: #aeb5cc;
+      font-size: 13px;
+      text-align: center
+    }
+
+    a {
+      color: #9dacff
+    }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="brand">Quick IM</div>
+    <h1>欢迎回来</h1>
+    <p class="sub">登录后会签发 JWT，并进入 WebSocket 演示控制台。</p>
+    <form id="login-form"><label for="username">用户名</label><input id="username" name="username" required
+        autocomplete="username" autofocus><label for="password">密码</label><input id="password" name="password"
+        type="password" required autocomplete="current-password"><button id="submit" type="submit">登录</button></form>
+    <p id="message" role="status"></p>
+    <p class="footer">还没有账号？<a href="/auth/register">去注册</a></p>
+  </main>
+  <script>
+    const form = document.querySelector('#login-form'), button = document.querySelector('#submit'), message = document.querySelector('#message');
+    if (new URLSearchParams(location.search).get('registered') === '1') { message.className = 'success'; message.textContent = '注册成功，请使用新账号登录。' }
+    form.addEventListener('submit', async event => { event.preventDefault(); message.className = ''; button.disabled = true; button.textContent = '正在登录…'; try { const response = await fetch('/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: form.username.value.trim(), password: form.password.value }) }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || '登录失败，请检查用户名和密码'); localStorage.setItem('quick_im_token', data.token); message.className = 'success'; message.textContent = '登录成功，正在进入 IM 控制台…'; setTimeout(() => location.assign('/im'), 300) } catch (error) { message.className = 'error'; message.textContent = error.message } finally { button.disabled = false; button.textContent = '登录' } });
+  </script>
+</body>
+
+</html>
+{{ end }}
