@@ -3,6 +3,7 @@ package user
 import (
 	"log"
 	"quick-im-demo/internal/config"
+	"quick-im-demo/internal/models/message"
 	"strconv"
 
 	"gorm.io/driver/mysql"
@@ -23,7 +24,7 @@ func initDB() (db *gorm.DB) {
 		panic("failed to connect database")
 	}
 
-	if err := db.AutoMigrate(&User{}); err != nil {
+	if err := db.AutoMigrate(&User{}, &message.Message{}); err != nil {
 		log.Fatal("auto migrate failed:", err)
 		panic("failed to auto migrate database")
 	}

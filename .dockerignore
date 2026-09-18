@@ -1,0 +1,5 @@
+.git
+tmp
+config.yaml
+docker-config.yaml
+*.log

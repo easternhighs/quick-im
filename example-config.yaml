@@ -1,22 +1,22 @@
 app:
- env: dev
- http_addr: ":8080"
+  env: dev
+  http_addr: ":8000"
 
 mysql:
   host: "127.0.0.1"
   port: 3306
   username: "root"
-  password: "88888888"
+  password: "change-me"
   database: "quick_im"
   charset: "utf8mb4"
 
 redis:
   host: "127.0.0.1"
   port: 6379
-  username: "root"
-  password: "88888888"
+  username: ""
+  password: ""
   channel: "quick_im"
 
 jwt:
-  secret: "quick_im_secret"
+  secret: "replace-with-a-random-secret"
   expire_hours: 2

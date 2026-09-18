@@ -4,15 +4,21 @@ import (
 	"net/http"
 	"quick-im-demo/internal/utils"
 	"quick-im-demo/internal/ws"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/gorilla/websocket"
 )
 
+const pongWait = 60 * time.Second
+
 type WebSocketController struct{ Hub *ws.Hub }
 
-var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
+var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	return origin == "" || origin == "http://"+r.Host || origin == "https://"+r.Host
+}}
 
 func (wc *WebSocketController) Connect(c *gin.Context) {
 	tokenText, _ := c.Cookie("quick_im_token")
@@ -35,18 +41,22 @@ func (wc *WebSocketController) Connect(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	defer conn.Close()
-	wc.Hub.Add(username, conn)
-	defer wc.Hub.Remove(username, conn)
-	_ = conn.WriteJSON(gin.H{"event": "connected", "username": username})
+	session := ws.NewSession(conn)
+	wc.Hub.Add(username, session)
+	defer wc.Hub.Remove(username, session)
+	go session.WritePump()
+	session.Enqueue(gin.H{"event": "connected", "username": username})
 
+	conn.SetReadLimit(8 * 1024)
+	_ = conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error { return conn.SetReadDeadline(time.Now().Add(pongWait)) })
 	for {
 		messageType, payload, err := conn.ReadMessage()
 		if err != nil {
 			return
 		}
 		if messageType == websocket.TextMessage && string(payload) == "ping" {
-			_ = conn.WriteJSON(gin.H{"event": "pong"})
+			session.Enqueue(gin.H{"event": "pong"})
 		}
 	}
 }

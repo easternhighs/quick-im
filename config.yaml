@@ -1,6 +1,6 @@
 app:
  env: dev
- http_addr: ":8080"
+ http_addr: ":8000"
 
 mysql:
   host: "127.0.0.1"
@@ -13,8 +13,8 @@ mysql:
 redis:
   host: "127.0.0.1"
   port: 6379
-  username: "root"
-  password: "88888888"
+  username: ""
+  password: ""
   channel: "quick_im"
 
 jwt:
